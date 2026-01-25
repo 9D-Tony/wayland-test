@@ -35,38 +35,12 @@ static void set_clear_color(float red, float green, float blue)
     }
 }
 
-static void draw_square(uint32_t x,uint32_t y, uint32_t size_x,uint32_t size_y)
-{
-
-    uint8_t alpha = 255;
-    uint8_t multiplied_blue = 0 * (float)alpha / 256.0f;
-    uint8_t multiplied_green = 0 * (float)alpha / 256.0f;
-    uint8_t multiplied_red = 255 * (float)alpha / 256.0f;
-
-
-    assert(size_x < window_width + 1);
-    assert(size_y < window_height + 1);
-
-    for (uint32_t i = size_y * size_x * 4; i < window_width * window_height * 4; i += 4) {
-
-        if(i < size_y * size_x + x * 4)
-        {
-            //basic alpha blending
-            pixel[i] = multiplied_blue;
-            pixel[i + 1] = multiplied_green;
-            pixel[i + 2] = multiplied_red;
-            pixel[i + 3] = alpha; //set alpha
-        }
-    }
-}
-
 static void draw()
 {
     //draw something into the window
     //in format BGRA for some reason
 
     set_clear_color(32,32,32);
-    draw_square(10,10,300,300);
 
     //memset(pixel, 0,window_width*window_height*4);
 
