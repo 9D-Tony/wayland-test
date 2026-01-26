@@ -3,6 +3,8 @@
 
 uint32_t pixel_alloc;
 
+int32_t allocate_shared_memory(uint64_t sz);
+
 static void resize_window()
 {
     int32_t alloc_size = window_width * window_height * 4;

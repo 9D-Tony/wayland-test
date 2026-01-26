@@ -136,7 +136,7 @@ void seat_name(void* data, struct wl_seat *seat, int8_t *name)
 
 struct wl_seat_listener seat_list = {
     .capabilities = seat_cap,
-    .name = seat_name
+    //.name = seat_name
 };
 
 static void
