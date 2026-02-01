@@ -1,6 +1,16 @@
 #ifndef POINTER_H
 #define POINTER_H
 
+typedef struct {
+    float x;
+    float y;
+    uint32_t grabbing;
+    uint32_t is_entered;
+    uint32_t button_pressed;
+}Mouse;
+
+Mouse mouse;
+
 //defined in /usr/include/wayland-client-protocol.h
 static void pointer_handle_button(void *data, struct wl_pointer *pointer,
                                   uint32_t serial, uint32_t time, uint32_t button, uint32_t state) {
@@ -10,52 +20,58 @@ static void pointer_handle_button(void *data, struct wl_pointer *pointer,
     // of the toplevel
 
     if (button == BTN_MIDDLE && state == WL_POINTER_BUTTON_STATE_PRESSED) {
-        printf("middle mouse button pressed\n");
+        mouse.button_pressed = BTN_MIDDLE;
     }else if (button == BTN_RIGHT && state == WL_POINTER_BUTTON_STATE_PRESSED) {
-        printf("right mouse button pressed\n");
+        mouse.button_pressed = BTN_RIGHT;
     }else if (button == BTN_LEFT && state == WL_POINTER_BUTTON_STATE_PRESSED) {
-        printf("left mouse button pressed\n");
-        xdg_toplevel_move(xdg_toplevel, seat, serial);
+
+        if(mouse.y < 32.0f) // only draw
+        {
+            xdg_toplevel_move(xdg_toplevel, seat, serial); // this make the mouse leave the window so release is never called.
+        }
+
+        mouse.grabbing = true;
+        mouse.button_pressed = BTN_LEFT;
     }
 
-    if(state == WL_POINTER_BUTTON_STATE_RELEASED)
-    {
-        printf("button released\n");
-    }
-
-    printf("button state: %d \n",state);
 }
-
-/*
-void *data,
-struct wl_pointer *wl_*pointer,
-u *int32_t time,
-wl_fixed_t surface_x,
-wl_fixed_t surface_y);*/
 
 static void pointer_handle_motion(void *data, struct wl_pointer *pointer,
                                 uint32_t time,
                                 wl_fixed_t surface_x,
                                 wl_fixed_t surface_y)
 {
-    //printf("surface_x: %d, surface_y: %d \n", surface_x,surface_y);
+    //printf("surface_x: %lf, surface_y: %lf \n", wl_fixed_to_double(surface_x),wl_fixed_to_double(surface_y));
+    mouse.x = (float)wl_fixed_to_double(surface_x);
+    mouse.y = (float)wl_fixed_to_double(surface_y);
 }
 
+static void pointer_handle_enter(void *data, struct wl_pointer *pointer,
+                                 uint32_t serial,
+                                 struct wl_surface *surface,
+                                 wl_fixed_t surface_x,
+                                 wl_fixed_t surface_y)
+{
+    mouse.is_entered = true;
+    if(mouse.grabbing)
+    {
+        mouse.grabbing = false;
+        mouse.button_pressed = BTN_DEAD;
+    }
+}
 
-/*
-void *data,           *
-struct wl_pointer *wl_pointer,
-uint32_t time,
-uint32_t axis,
-wl_fixed_t value
-*/
+static void pointer_handle_leave(void *data, struct wl_pointer *pointer,
+                                  uint32_t serial,
+                                  struct wl_surface *surface)
+{
+    mouse.is_entered = false;
+}
+
 static void pointer_handle_scroll(void *data, struct wl_pointer *pointer,
                                   uint32_t time,
                                   uint32_t axis,
                                   wl_fixed_t value)
 {
-    // wl_fixed_t is just int32_t can convert to double
-    // by wl_fixed_to_double function
 
     printf("axis: %d, value: %lf \n", axis,wl_fixed_to_double(value));
 }

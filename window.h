@@ -2,7 +2,6 @@
 #define WINDOW_H
 
 uint32_t pixel_alloc;
-
 int32_t allocate_shared_memory(uint64_t sz);
 
 static void resize_window()
@@ -37,14 +36,45 @@ static void set_clear_color(float red, float green, float blue)
     }
 }
 
+void render_box(uint8_t *pixel, uint32_t box_x, uint32_t box_y,
+                uint32_t box_width, uint32_t box_height,
+                uint8_t red, uint8_t green, uint8_t blue, uint8_t alpha) {
+
+    // Premultiply the colors
+    uint8_t multiplied_blue = blue * (float)alpha / 256.0f;
+    uint8_t multiplied_green = green * (float)alpha / 256.0f;
+    uint8_t multiplied_red = red * (float)alpha / 256.0f;
+
+    int32_t start_x = (box_x < window_width) ? box_x : window_width;
+    uint32_t start_y = (box_y < window_height) ? box_y : window_height;
+    uint32_t end_x = (box_x + box_width < window_width) ? box_x + box_width : window_width;
+    uint32_t end_y = (box_y + box_height < window_height) ? box_y + box_height : window_height;
+
+    // Calculate box position (centered)
+    // Render the box
+    for (uint32_t y = start_y; y < end_y; y++) {
+        for (uint32_t x = start_x; x < end_x; x++)
+        {
+            // Calculate pixel index: (y * width + x) * 4 bytes per pixel
+            uint32_t i = (y * window_width + x) * 4;
+            pixel[i] = multiplied_blue;
+            pixel[i + 1] = multiplied_green;
+            pixel[i + 2] = multiplied_red;
+            pixel[i + 3] = alpha; // shouldn't overwrite pixels and show past the window.
+        }
+    }
+}
+
 static void draw()
 {
-    //draw something into the window
-    //in format BGRA for some reason
+    wl_display_flush(display);
 
+    //draw something into the window
     set_clear_color(32,32,32);
 
-    //memset(pixel, 0,window_width*window_height*4);
+    render_box(pixel, window_width / 2, window_height / 2, 50, 50, 64, 64, 64, 255);
+    render_box(pixel, mouse.x - 25, mouse.y - 25, 50, 50, 255, 0, 0, 255);
+    render_box(pixel, 0, 0, window_width, 32, 64, 64, 64, 255); // draw title bar
 
     wl_surface_attach(surface,buffer, 0,0);
     wl_surface_damage_buffer(surface, 0,0, window_width, window_height);

@@ -1,5 +1,7 @@
 #include <wayland-client.h>
+#include <wayland-client-core.h>
 #include <wayland-client-protocol.h>
+#include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -7,9 +9,9 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <stdbool.h>
 #include <linux/input-event-codes.h> //for handling mouse button codes
 #include "xdg-shell-client-protocol.h"
-#include "xdg-shell-protocol.c"
 
 struct wl_compositor *comp;
 struct wl_surface *surface;
@@ -20,6 +22,7 @@ struct xdg_toplevel *xdg_toplevel = NULL; // acts like a window
 struct wl_seat *seat;
 struct wl_keyboard *keyboard;
 struct wl_pointer *pointer;
+struct wl_display *display;
 
 uint8_t pixel_colour = 255;
 uint8_t window_close;
@@ -27,9 +30,9 @@ uint8_t *pixel;
 uint16_t window_width = 800;
 uint16_t window_height = 600;
 
+#include "pointer.h"
 #include "window.h"
 #include "keyboard.h"
-#include "pointer.h"
 
 
 int32_t allocate_shared_memory(uint64_t sz)
@@ -108,8 +111,8 @@ struct xdg_wm_base_listener sh_list = {
 };
 
 static const struct wl_pointer_listener pointer_listener = {
-    .enter = noop,
-    .leave = noop,
+    .enter = pointer_handle_enter,
+    .leave = pointer_handle_leave,
     .motion = pointer_handle_motion,
     .button = pointer_handle_button,
     .axis = pointer_handle_scroll,
@@ -129,14 +132,14 @@ void seat_cap(void *data, struct wl_seat *seat, uint32_t cap)
     }
 }
 
-void seat_name(void* data, struct wl_seat *seat, int8_t *name)
+void seat_name(void* data, struct wl_seat *seat, const char *name)
 {
-
+    //ignore
 }
 
 struct wl_seat_listener seat_list = {
     .capabilities = seat_cap,
-    //.name = seat_name
+    .name = seat_name
 };
 
 static void
@@ -169,7 +172,7 @@ static void
 registry_handle_global_remove(void *data, struct wl_registry *registry,
                               uint32_t name)
 {
-    // This space deliberately left blank
+    // left blank
 }
 
 static const struct wl_registry_listener
@@ -182,7 +185,7 @@ int
 main(int argc, char *argv[])
 {
 
-    struct wl_display *display = wl_display_connect(0);
+    display = wl_display_connect(0);
     struct wl_registry *registry = wl_display_get_registry(display);
     wl_registry_add_listener(registry, &registry_listener, 0);
     wl_display_roundtrip(display);
